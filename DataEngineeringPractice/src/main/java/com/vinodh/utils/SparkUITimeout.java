@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface SparkUITimeout {
 
-    long timeout() default 60;
+    long timeout() default -1;
 
     boolean isEnabled() default true;
 }
