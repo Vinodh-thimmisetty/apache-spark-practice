@@ -5,6 +5,7 @@ import com.vinodh.utils.SparkUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
@@ -30,6 +31,7 @@ public class SalesPipeline implements SparkApp {
     @SparkUITimeout(timeout = 1)
     @Override
     public void execute() {
+        final String OUTPUT_DIR = SparkUtils.getProperty("results.folder");
         final String CSV_FILE_PATH = SparkUtils.getProperty("sales.csv.path");
         final SparkSession spark = SparkUtils.getSpark();
         spark.conf().set("spark.app.name", this.getClass().getCanonicalName());
@@ -66,12 +68,18 @@ public class SalesPipeline implements SparkApp {
         // Top 10 Sales Persons
         salesDS.orderBy(functions.col(TOTAL_SALES_AMOUNT).desc_nulls_last())
                 .limit(10)
-                .show();
+                .write()
+                .format("csv")
+                .mode(SaveMode.Overwrite)
+                .save(OUTPUT_DIR + "/csv/");
 
         // Bottom 10 Sales Persons
         salesDS.orderBy(functions.col(TOTAL_SALES_AMOUNT).asc_nulls_last())
                 .limit(10)
-                .show();
+                .write()
+                .format("csv")
+                .mode(SaveMode.Append)
+                .save(OUTPUT_DIR + "/csv/");
 
     }
 }
