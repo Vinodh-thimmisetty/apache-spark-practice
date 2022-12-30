@@ -20,7 +20,7 @@ import java.util.Arrays;
 import static org.apache.spark.sql.functions.sum;
 
 @Slf4j
-public class SalesPipeline implements SparkApp {
+public class SalesPipelineWithCSV implements SparkApp {
 
     private static final String FIELD_DESC = "description";
     private static final String ID = "id";

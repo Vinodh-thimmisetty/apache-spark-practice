@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 import static java.lang.String.join;
 
 // Reference: https://spark.apache.org/docs/latest/sql-data-sources.html
-public class AwsEmrConfigPipeline implements SparkApp {
+public class AwsEmrConfigPipelineWithJSON implements SparkApp {
 
     @SneakyThrows
     @SparkUITimeout(timeout = 1)
