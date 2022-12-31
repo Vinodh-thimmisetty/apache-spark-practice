@@ -3,6 +3,7 @@ package com.vinodh;
 
 import com.vinodh.apps.AdminConfigPipelineWithParquet;
 import com.vinodh.apps.AwsEmrConfigPipelineWithJSON;
+import com.vinodh.apps.EmployeePipelineWithMySQL;
 import com.vinodh.apps.HelloVinodh;
 import com.vinodh.apps.HelloWorld;
 import com.vinodh.apps.SalesPipelineWithCSV;
@@ -16,6 +17,7 @@ public class SparkDemos {
         SparkApp.setup(new SalesPipelineWithCSV()).execute();
         SparkApp.setup(new AwsEmrConfigPipelineWithJSON()).execute();
         SparkApp.setup(new AdminConfigPipelineWithParquet()).execute();
+        SparkApp.setup(new EmployeePipelineWithMySQL()).execute();
 
     }
 
