@@ -4,10 +4,16 @@
         <Console name="LogToConsole" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
+        <Console name="LogToConsoleV2" target="SYSTEM_OUT">
+            <PatternLayout pattern="%msg%n"/>
+        </Console>
     </Appenders>
     <Loggers>
         <Logger name="com.vinodh" level="info" additivity="false">
             <AppenderRef ref="LogToConsole"/>
+        </Logger>
+        <Logger name="advanced_java" level="info" additivity="false">
+            <AppenderRef ref="LogToConsoleV2"/>
         </Logger>
         <Root level="error">
             <AppenderRef ref="LogToConsole"/>
