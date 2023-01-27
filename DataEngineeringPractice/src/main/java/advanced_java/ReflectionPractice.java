@@ -6,22 +6,31 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static java.sql.DriverManager.getConnection;
+import static java.util.Arrays.asList;
 
 @Slf4j
 public class ReflectionPractice {
@@ -37,6 +46,17 @@ public class ReflectionPractice {
     public @interface Column {
         String name();
     }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Provides {
+
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface Inject {
+
+    }
+
 
     /*
         create table Person(
@@ -201,12 +221,13 @@ public class ReflectionPractice {
     }
 
     static class H2EntityManager<T> implements EntityManager<T> {
+        @Inject
+        private Connection connection;
 
         Class<T> clz;
 
-        public H2EntityManager(Class<T> clz) throws SQLException {
+        public H2EntityManager(Class<T> clz) {
             this.clz = clz;
-            deleteAll();
         }
 
         class PreparedStatementForH2 {
@@ -245,7 +266,6 @@ public class ReflectionPractice {
                 return h2Statement;
             }
         }
-
 
         @Override
         public void persist(T t) throws SQLException, IllegalAccessException {
@@ -313,19 +333,99 @@ public class ReflectionPractice {
         }
 
         private PreparedStatementForH2 parseSql(String sqlQuery) throws SQLException {
-            try (Connection connection = getConnection("jdbc:h2:/Users/thimmv/IdeaProjects/apache-spark-practice/DataEngineeringPractice/db-files/vinodh", "sa", "");
-                 PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-                return new PreparedStatementForH2(statement);
-            }
+            return new PreparedStatementForH2(connection.prepareStatement(sqlQuery));
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    interface ConnectionProvider {
+        Connection connection() throws Exception;
+    }
+
+    static class H2ConnectionProvider implements ConnectionProvider {
+
+        public H2ConnectionProvider() {
+        }
+
+        @Override
+        @Provides
+        public Connection connection() throws Exception {
+            return DriverManager.getConnection("jdbc:h2:/Users/thimmv/IdeaProjects/apache-spark-practice/DataEngineeringPractice/db-files/vinodh", "sa", "");
+        }
+    }
+
+    static class MySqlConnectionProvider implements ConnectionProvider {
+
+        public MySqlConnectionProvider() {
+        }
+
+        @Override
+        @Provides
+        public Connection connection() throws Exception {
+            return DriverManager.getConnection("jdbc:mysql://localhost:3306/sql_practise", "vinodh", "");
+        }
+    }
+
+    static class BeanManager {
+
+        private static BeanManager instance = new BeanManager();
+
+        private Map<Class<?>, Supplier<?>> registry = new HashMap<>();
+
+        private BeanManager() {
+
+            List<Class<?>> connectionProviders = asList(H2ConnectionProvider.class);
+            for (Class<?> clz : connectionProviders) {
+                for (Method declaredMethod : clz.getDeclaredMethods()) {
+                    if (declaredMethod.isAnnotationPresent(Provides.class)) {
+                        Class<?> returnType = declaredMethod.getReturnType();
+                        Supplier<?> supplier = () -> {
+                            try {
+                                if (!Modifier.isStatic(declaredMethod.getModifiers())) {
+                                    return declaredMethod.invoke(clz.getConstructor().newInstance());
+                                } else {
+                                    return declaredMethod.invoke(null);
+                                }
+                            } catch (Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        };
+                        registry.put(returnType, supplier);
+                    }
+                }
+            }
+        }
+
+        public static BeanManager getInstance() {
+            return instance;
+        }
+
+        public <T, V> T getInstance(Class<T> manager, Class<V> entity) throws Exception {
+            System.out.println(" --> " + manager.getSimpleName());
+            T t = manager.getConstructor(Class.class).newInstance(entity);
+            for (Field declaredField : manager.getDeclaredFields()) {
+                if (declaredField.isAnnotationPresent(Inject.class)) {
+                    declaredField.setAccessible(true);
+                    Class<?> declaredFieldType = declaredField.getType();
+                    Supplier<?> supplier = registry.get(declaredFieldType);
+                    Object objectToInject = supplier.get();
+                    declaredField.set(t, objectToInject);
+                }
+            }
+            return t;
+        }
+
+    }
+
+
+    public static void main(String[] args) throws Throwable {
 
         Server.main("-ifNotExists");
         log.info("H2 Server Started...");
 
-        EntityManager<Person> em = new H2EntityManager<>(Person.class);
+        BeanManager bm = BeanManager.getInstance();
+        EntityManager<Person> em = bm.getInstance(H2EntityManager.class, Person.class);
+
+        em.deleteAll();
 
         em.persist(new Person("Vinodh", 30));
         em.persist(new Person("Kumar", 25));
@@ -334,6 +434,35 @@ public class ReflectionPractice {
         log.info("{}", em.findAll());
         log.info("{}", em.findById(1001L));
         log.info("{}", em.findById(2001L));
+
+
+        // Use MethodHandles to improve Performance on Reflection logics
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+        MethodHandle emptyConstructor = lookup.findConstructor(Person.class, MethodType.methodType(void.class));
+        Person p1 = (Person) emptyConstructor.invoke();
+        System.out.println(p1);
+
+        MethodHandle paramConstructor = lookup.findConstructor(Person.class, MethodType.methodType(void.class, int.class, String.class));
+        Person p2 = (Person) paramConstructor.invoke(123, "Vinodh");
+        System.out.println(p2);
+
+        MethodHandle nameGetter = lookup.findVirtual(Person.class, "getName", MethodType.methodType(String.class));
+        String pName = (String) nameGetter.invoke(p2);
+        System.out.println(pName);
+
+        MethodHandle nameSetter = lookup.findVirtual(Person.class, "setName", MethodType.methodType(void.class, String.class));
+        nameSetter.invoke(p2, "Kumar");
+        System.out.println(p2);
+
+        // Only Public Fields
+        MethodHandle nameReader = lookup.findGetter(Person.class, "name", String.class);
+        String nameOfPerson = (String) nameReader.invoke(p2);
+        System.out.println(nameOfPerson);
+
+        MethodHandle nameWriter = lookup.findSetter(Person.class, "name", String.class);
+        nameWriter.invoke(p2, "YoYo");
+        System.out.println(p2);
 
 
     }
