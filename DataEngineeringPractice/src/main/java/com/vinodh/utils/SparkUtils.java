@@ -17,6 +17,8 @@ public class SparkUtils {
     @Getter
     private static final SparkSession spark;
     @Getter
+    private static final SparkSession hiveSpark;
+    @Getter
     private static final SparkContext sc;
 
     private static final Properties properties;
@@ -37,6 +39,29 @@ public class SparkUtils {
                 .builder()
                 .config(sparkConf)
                 .getOrCreate();
+
+        SparkConf hiveSparkConf = new SparkConf()
+                .setMaster("local[*]")
+                .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                .set("spark.driver.extraJavaOption", "-Dlog4j.configuration=" + new File(Objects.requireNonNull(SparkUtils.class.getClassLoader().getResource("log4j2.xml")).getPath()).getPath())
+                .set("spark.executor.extraJavaOption", "-Dlog4j.configuration=" + new File(Objects.requireNonNull(SparkUtils.class.getClassLoader().getResource("log4j2.xml")).getPath()).getPath())
+                .set("hive.exec.dynamic.partition.mode", "nonstrict")
+                .set("hive.metastore.schema.verification", "false")
+                .set("spark.sql.catalogImplementation", "hive")
+                .set("javax.jdo.option.ConnectionDriverName", "com.mysql.cj.jdbc.Driver")
+                .set("javax.jdo.option.ConnectionURL", "jdbc:mysql://localhost:3306/metastore?createDatabaseIfNotExist=true")
+                .set("javax.jdo.option.ConnectionUserName", "root")
+                .set("javax.jdo.option.ConnectionPassword", "vinodh")
+                .set("spark.sql.warehouse.dir", "hdfs://localhost:9000/user/hive/warehouse")
+                .set("hive.metastore.warehouse.dir", "hdfs://localhost:9000/user/hive/warehouse")
+//                .set("hive.metastore.uris", "thrift://localhost:9083")
+                .registerKryoClasses(new Class[]{SparkApp.class});
+        hiveSpark = SparkSession
+                .builder()
+                .config(hiveSparkConf)
+                .enableHiveSupport()
+                .getOrCreate();
+
         sc = spark.sparkContext();
 
         properties = new Properties();

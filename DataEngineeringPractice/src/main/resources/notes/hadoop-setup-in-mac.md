@@ -61,7 +61,9 @@ export PATH=$HIVE_HOME/bin:$PATH
     </property>
     <property>
         <name>yarn.application.classpath</name>
-        <value>/Full_File_path/hadoop-3.3.4/share/hadoop/common/*,/Full_File_path/hadoop-3.3.4/share/hadoop/common/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/lib/*</value>
+        <value>
+            /Full_File_path/hadoop-3.3.4/share/hadoop/common/*,/Full_File_path/hadoop-3.3.4/share/hadoop/common/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/lib/*
+        </value>
     </property>
 </configuration>
 ```
@@ -87,22 +89,27 @@ export PATH=$HIVE_HOME/bin:$PATH
     </property>
     <property>
         <name>mapreduce.application.classpath</name>
-               <value>/Full_File_path/hadoop-3.3.4/share/hadoop/common/*,/Full_File_path/hadoop-3.3.4/share/hadoop/common/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/lib/*</value>
+        <value>
+            /Full_File_path/hadoop-3.3.4/share/hadoop/common/*,/Full_File_path/hadoop-3.3.4/share/hadoop/common/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/*,/Full_File_path/hadoop-3.3.4/share/hadoop/hdfs/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/*,/Full_File_path/hadoop-3.3.4/share/hadoop/mapreduce/lib/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/*,/Full_File_path/hadoop-3.3.4/share/hadoop/yarn/lib/*
+        </value>
     </property>
 </configuration>
 ```
 
 ```xml
-
 <!--$HIVE_HOME/apache-hive-3.1.3-bin/conf/hive-site.xml-->
 <configuration>
     <property>
-        <name>hive.server2.enable.doAs</name>
-        <value>FALSE</value>
-        <description>
-            Setting this property to true will have HiveServer2 execute
-            Hive operations as the user making the calls to it.
-        </description>
+        <name>hive.metastore.db.type</name>
+        <value>mysql</value>
+    </property>
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://localhost:9083</value>
     </property>
     <property>
         <name>javax.jdo.option.ConnectionURL</name>
@@ -120,6 +127,23 @@ export PATH=$HIVE_HOME/bin:$PATH
         <name>javax.jdo.option.ConnectionDriverName</name>
         <value>com.mysql.cj.jdbc.Driver</value>
     </property>
+    <property>
+        <name>hive.server2.thrift.port</name>
+        <value>10000</value>
+    </property>
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>localhost</value>
+    </property>
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>FALSE</value>
+        <description>
+            Setting this property to true will have HiveServer2 execute
+            Hive operations as the user making the calls to it.
+        </description>
+    </property>
 
 </configuration>
 ```
+

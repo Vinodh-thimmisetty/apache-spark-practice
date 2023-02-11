@@ -4,6 +4,7 @@ package com.vinodh;
 import com.vinodh.apps.AdminConfigPipelineWithParquet;
 import com.vinodh.apps.AwsEmrConfigPipelineWithJSON;
 import com.vinodh.apps.CustomerPipelineWithSnowflake;
+import com.vinodh.apps.EmployeePipelineWithHive;
 import com.vinodh.apps.EmployeePipelineWithMySQL;
 import com.vinodh.apps.HelloVinodh;
 import com.vinodh.apps.HelloWorld;
@@ -20,10 +21,9 @@ public class SparkDemos {
         SparkApp.setup(new AwsEmrConfigPipelineWithJSON()).execute();
         SparkApp.setup(new AdminConfigPipelineWithParquet()).execute();
         SparkApp.setup(new EmployeePipelineWithMySQL()).execute();
+        SparkApp.setup(new EmployeePipelineWithHive()).execute();
         SparkApp.setup(new MoviesPipelineWithMongoDB()).execute();
-
         SparkApp.setup(new CustomerPipelineWithSnowflake()).execute();
-
     }
 
 
